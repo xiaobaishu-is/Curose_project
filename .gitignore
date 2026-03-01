@@ -55,7 +55,6 @@ apps/ios/*.xcworkspace/
 apps/ios/.swiftpm/
 apps/ios/.derivedData/
 apps/ios/.local-signing.xcconfig
-vendor/
 apps/ios/Clawdbot.xcodeproj/
 apps/ios/Clawdbot.xcodeproj/**
 apps/macos/.build/**
@@ -63,7 +62,7 @@ apps/macos/.build/**
 apps/ios/*.xcfilelist
 
 # Vendor build artifacts
-vendor/a2ui/renderers/lit/dist/
+#vendor/a2ui/renderers/lit/dist/
 src/canvas-host/a2ui/*.bundle.js
 src/canvas-host/a2ui/*.map
 .bundle.hash
