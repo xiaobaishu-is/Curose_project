@@ -1,6 +1,13 @@
 node_modules
 **/node_modules/
 .env
+*.log
+
+# 项目本地目录（不纳入版本控制）
+analyse/
+analyse-1.0/
+temp-skills/
+
 docker-compose.extra.yml
 dist
 pnpm-lock.yaml
@@ -120,3 +127,26 @@ dist/protocol.schema.json
 
 # Synthing
 **/.stfolder/
+
+# 与项目运行无关：本地/缓存/临时/IDE/私有配置
+.pi/
+fly.private.toml
+openclaw.podman.env
+.cursor/
+.vscode/
+*.tmp
+*.temp
+*.bak
+*.swp
+.*.swp
+.cache/
+.turbo/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.node_repl_history
+.env.*.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

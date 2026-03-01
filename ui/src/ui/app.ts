@@ -4,15 +4,6 @@ import { i18n, I18nController, isSupportedLocale } from "../i18n/index.ts";
 import {
   handleChannelConfigReload as handleChannelConfigReloadInternal,
   handleChannelConfigSave as handleChannelConfigSaveInternal,
-  handleNostrProfileCancel as handleNostrProfileCancelInternal,
-  handleNostrProfileEdit as handleNostrProfileEditInternal,
-  handleNostrProfileFieldChange as handleNostrProfileFieldChangeInternal,
-  handleNostrProfileImport as handleNostrProfileImportInternal,
-  handleNostrProfileSave as handleNostrProfileSaveInternal,
-  handleNostrProfileToggleAdvanced as handleNostrProfileToggleAdvancedInternal,
-  handleWhatsAppLogout as handleWhatsAppLogoutInternal,
-  handleWhatsAppStart as handleWhatsAppStartInternal,
-  handleWhatsAppWait as handleWhatsAppWaitInternal,
 } from "./app-channels.ts";
 import {
   handleAbortChat as handleAbortChatInternal,
@@ -52,6 +43,18 @@ import {
 } from "./app-tool-stream.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
+import {
+  loadModelsConfig as loadModelsConfigInternal,
+  saveModelProvider as saveModelProviderInternal,
+  removeModelProvider as removeModelProviderInternal,
+  activateModel as activateModelInternal,
+  deactivateModel as deactivateModelInternal,
+} from "./controllers/models.ts";
+import {
+  emptyFormState as modelsEmptyFormState,
+  formStateFromProvider as modelsFormStateFromProvider,
+  formStateToProvider as modelsFormStateToProvider,
+} from "./views/models.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
 import type { CronFieldErrors } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
@@ -80,11 +83,9 @@ import type {
   SkillStatusReport,
   ToolsCatalogResult,
   StatusSummary,
-  NostrProfile,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
-import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 
 declare global {
   interface Window {
@@ -176,6 +177,26 @@ export class OpenClawApp extends LitElement {
   @state() execApprovalError: string | null = null;
   @state() pendingGatewayUrl: string | null = null;
 
+  @state() modelsLoading = false;
+  @state() modelsError: string | null = null;
+  @state() modelsSaving = false;
+  @state() modelsActivating = false;
+  @state() modelsProviders: import("./controllers/models.js").ModelProviderEntry[] = [];
+  @state() modelsActiveModel: string | null = null;
+  @state() modelsFormVisible = false;
+  @state() modelsEditingProvider: import("./controllers/models.js").ModelProviderEntry | null = null;
+  modelsConfigHash: string | null = null;
+  @state() modelsFormState: import("./views/models.js").ModelsFormState = {
+    providerId: "",
+    baseUrl: "",
+    api: "openai-completions",
+    apiKey: "",
+    modelId: "",
+    modelName: "",
+    contextWindow: "128000",
+    maxTokens: "8192",
+  };
+
   @state() configLoading = false;
   @state() configRaw = "{\n}\n";
   @state() configRawOriginal = "";
@@ -202,12 +223,6 @@ export class OpenClawApp extends LitElement {
   @state() channelsSnapshot: ChannelsStatusSnapshot | null = null;
   @state() channelsError: string | null = null;
   @state() channelsLastSuccess: number | null = null;
-  @state() whatsappLoginMessage: string | null = null;
-  @state() whatsappLoginQrDataUrl: string | null = null;
-  @state() whatsappLoginConnected: boolean | null = null;
-  @state() whatsappBusy = false;
-  @state() nostrProfileFormState: NostrProfileFormState | null = null;
-  @state() nostrProfileAccountId: string | null = null;
 
   @state() presenceLoading = false;
   @state() presenceEntries: PresenceEntry[] = [];
@@ -496,48 +511,12 @@ export class OpenClawApp extends LitElement {
     );
   }
 
-  async handleWhatsAppStart(force: boolean) {
-    await handleWhatsAppStartInternal(this, force);
-  }
-
-  async handleWhatsAppWait() {
-    await handleWhatsAppWaitInternal(this);
-  }
-
-  async handleWhatsAppLogout() {
-    await handleWhatsAppLogoutInternal(this);
-  }
-
   async handleChannelConfigSave() {
     await handleChannelConfigSaveInternal(this);
   }
 
   async handleChannelConfigReload() {
     await handleChannelConfigReloadInternal(this);
-  }
-
-  handleNostrProfileEdit(accountId: string, profile: NostrProfile | null) {
-    handleNostrProfileEditInternal(this, accountId, profile);
-  }
-
-  handleNostrProfileCancel() {
-    handleNostrProfileCancelInternal(this);
-  }
-
-  handleNostrProfileFieldChange(field: keyof NostrProfile, value: string) {
-    handleNostrProfileFieldChangeInternal(this, field, value);
-  }
-
-  async handleNostrProfileSave() {
-    await handleNostrProfileSaveInternal(this);
-  }
-
-  async handleNostrProfileImport() {
-    await handleNostrProfileImportInternal(this);
-  }
-
-  handleNostrProfileToggleAdvanced() {
-    handleNostrProfileToggleAdvancedInternal(this);
   }
 
   async handleExecApprovalDecision(decision: "allow-once" | "allow-always" | "deny") {
@@ -575,6 +554,42 @@ export class OpenClawApp extends LitElement {
 
   handleGatewayUrlCancel() {
     this.pendingGatewayUrl = null;
+  }
+
+  async handleModelsLoad() {
+    await loadModelsConfigInternal(this as unknown as Parameters<typeof loadModelsConfigInternal>[0]);
+  }
+
+  async handleModelSave() {
+    const entry = modelsFormStateToProvider(this.modelsFormState);
+    await saveModelProviderInternal(this as unknown as Parameters<typeof saveModelProviderInternal>[0], entry);
+  }
+
+  async handleModelRemove(providerId: string) {
+    await removeModelProviderInternal(this as unknown as Parameters<typeof removeModelProviderInternal>[0], providerId);
+  }
+
+  async handleModelActivate(providerId: string, modelId: string) {
+    await activateModelInternal(this as unknown as Parameters<typeof activateModelInternal>[0], providerId, modelId);
+  }
+
+  async handleModelDeactivate() {
+    await deactivateModelInternal(this as unknown as Parameters<typeof deactivateModelInternal>[0]);
+  }
+
+  handleModelsShowForm(editing: import("./controllers/models.js").ModelProviderEntry | null) {
+    this.modelsEditingProvider = editing;
+    this.modelsFormState = editing ? modelsFormStateFromProvider(editing) : modelsEmptyFormState();
+    this.modelsFormVisible = true;
+  }
+
+  handleModelsHideForm() {
+    this.modelsFormVisible = false;
+    this.modelsEditingProvider = null;
+  }
+
+  handleModelsFormChange(patch: Partial<import("./views/models.js").ModelsFormState>) {
+    this.modelsFormState = { ...this.modelsFormState, ...patch };
   }
 
   // Sidebar handlers for tool output viewing

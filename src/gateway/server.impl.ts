@@ -1,7 +1,11 @@
 import path from "node:path";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { getActiveEmbeddedRunCount } from "../agents/pi-embedded-runner/runs.js";
-import { registerSkillsChangeListener } from "../agents/skills/refresh.js";
+import {
+  bumpSkillsSnapshotVersion,
+  ensureSkillsWatcher,
+  registerSkillsChangeListener,
+} from "../agents/skills/refresh.js";
 import { initSubagentRegistry } from "../agents/subagent-registry.js";
 import { getTotalPendingReplies } from "../auto-reply/reply/dispatcher-registry.js";
 import type { CanvasHostServer } from "../canvas-host/server.js";
@@ -570,6 +574,8 @@ export async function startGatewayServer(
   }
 
   if (!minimalTestGateway) {
+    ensureSkillsWatcher({ workspaceDir: defaultWorkspaceDir, config: cfgAtStart });
+    bumpSkillsSnapshotVersion({ workspaceDir: defaultWorkspaceDir, reason: "manual" });
     setSkillsRemoteRegistry(nodeRegistry);
     void primeRemoteSkillsCache();
   }

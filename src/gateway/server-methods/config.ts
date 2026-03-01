@@ -346,6 +346,12 @@ export const configHandlers: GatewayRequestHandlers = {
     const resolved = migrated.next ?? restoredMerge.result;
     const validated = validateConfigObjectWithPlugins(resolved);
     if (!validated.ok) {
+      const issuesSummary = validated.issues
+        .map((i) => `${i.path}: ${i.message}`)
+        .join("; ");
+      context?.logGateway?.warn(
+        `config.patch validation failed: ${issuesSummary}`,
+      );
       respond(
         false,
         undefined,
@@ -373,20 +379,23 @@ export const configHandlers: GatewayRequestHandlers = {
       note,
     });
     const sentinelPath = await tryWriteRestartSentinelPayload(payload);
-    const restart = scheduleGatewaySigusr1Restart({
-      delayMs: restartDelayMs,
-      reason: "config.patch",
-      audit: {
-        actor: actor.actor,
-        deviceId: actor.deviceId,
-        clientIp: actor.clientIp,
-        changedPaths,
-      },
-    });
-    if (restart.coalesced) {
-      context?.logGateway?.warn(
-        `config.patch restart coalesced ${formatControlPlaneActor(actor)} delayMs=${restart.delayMs}`,
-      );
+    let restart: ReturnType<typeof scheduleGatewaySigusr1Restart> | null = null;
+    if (typeof restartDelayMs === "number") {
+      restart = scheduleGatewaySigusr1Restart({
+        delayMs: restartDelayMs,
+        reason: "config.patch",
+        audit: {
+          actor: actor.actor,
+          deviceId: actor.deviceId,
+          clientIp: actor.clientIp,
+          changedPaths,
+        },
+      });
+      if (restart.coalesced) {
+        context?.logGateway?.warn(
+          `config.patch restart coalesced ${formatControlPlaneActor(actor)} delayMs=${restart.delayMs}`,
+        );
+      }
     }
     respond(
       true,
@@ -433,20 +442,23 @@ export const configHandlers: GatewayRequestHandlers = {
       note,
     });
     const sentinelPath = await tryWriteRestartSentinelPayload(payload);
-    const restart = scheduleGatewaySigusr1Restart({
-      delayMs: restartDelayMs,
-      reason: "config.apply",
-      audit: {
-        actor: actor.actor,
-        deviceId: actor.deviceId,
-        clientIp: actor.clientIp,
-        changedPaths,
-      },
-    });
-    if (restart.coalesced) {
-      context?.logGateway?.warn(
-        `config.apply restart coalesced ${formatControlPlaneActor(actor)} delayMs=${restart.delayMs}`,
-      );
+    let restart: ReturnType<typeof scheduleGatewaySigusr1Restart> | null = null;
+    if (typeof restartDelayMs === "number") {
+      restart = scheduleGatewaySigusr1Restart({
+        delayMs: restartDelayMs,
+        reason: "config.apply",
+        audit: {
+          actor: actor.actor,
+          deviceId: actor.deviceId,
+          clientIp: actor.clientIp,
+          changedPaths,
+        },
+      });
+      if (restart.coalesced) {
+        context?.logGateway?.warn(
+          `config.apply restart coalesced ${formatControlPlaneActor(actor)} delayMs=${restart.delayMs}`,
+        );
+      }
     }
     respond(
       true,

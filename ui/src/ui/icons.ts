@@ -171,6 +171,13 @@ export const icons = {
       <path d="m14 17 2-2-2-2" />
     </svg>
   `,
+  trash: html`
+    <svg viewBox="0 0 24 24">
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    </svg>
+  `,
   edit: html`
     <svg viewBox="0 0 24 24">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -220,6 +227,13 @@ export const icons = {
   `,
   circle: html`
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>
+  `,
+  layers: html`
+    <svg viewBox="0 0 24 24">
+      <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+      <path d="m22.6 16.08-8.58 3.91a2 2 0 0 1-1.66 0l-8.58-3.9" />
+      <path d="m22.6 11.08-8.58 3.91a2 2 0 0 1-1.66 0l-8.58-3.9" />
+    </svg>
   `,
   puzzle: html`
     <svg viewBox="0 0 24 24">

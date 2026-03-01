@@ -9,6 +9,7 @@ type ChannelConfigFormProps = {
   schema: unknown;
   uiHints: ConfigUiHints;
   disabled: boolean;
+  excludeProperties?: Set<string>;
   onPatch: (path: Array<string | number>, value: unknown) => void;
 };
 
@@ -103,6 +104,20 @@ function renderExtraChannelFields(value: Record<string, unknown>) {
   `;
 }
 
+function filterSchemaProperties(
+  node: JsonSchema,
+  exclude: Set<string>,
+): JsonSchema {
+  if (!node.properties) return node;
+  const filtered: Record<string, JsonSchema> = {};
+  for (const [key, val] of Object.entries(node.properties)) {
+    if (!exclude.has(key)) {
+      filtered[key] = val;
+    }
+  }
+  return { ...node, properties: filtered };
+}
+
 export function renderChannelConfigForm(props: ChannelConfigFormProps) {
   const analysis = analyzeConfigSchema(props.schema);
   const normalized = analysis.schema;
@@ -111,11 +126,14 @@ export function renderChannelConfigForm(props: ChannelConfigFormProps) {
       <div class="callout danger">Schema unavailable. Use Raw.</div>
     `;
   }
-  const node = resolveSchemaNode(normalized, ["channels", props.channelId]);
+  let node = resolveSchemaNode(normalized, ["channels", props.channelId]);
   if (!node) {
     return html`
       <div class="callout danger">Channel config schema unavailable.</div>
     `;
+  }
+  if (props.excludeProperties && props.excludeProperties.size > 0) {
+    node = filterSchemaProperties(node, props.excludeProperties);
   }
   const configValue = props.configValue ?? {};
   const value = resolveChannelValue(configValue, props.channelId);
@@ -136,8 +154,12 @@ export function renderChannelConfigForm(props: ChannelConfigFormProps) {
   `;
 }
 
-export function renderChannelConfigSection(params: { channelId: string; props: ChannelsProps }) {
-  const { channelId, props } = params;
+export function renderChannelConfigSection(params: {
+  channelId: string;
+  props: ChannelsProps;
+  excludeProperties?: Set<string>;
+}) {
+  const { channelId, props, excludeProperties } = params;
   const disabled = props.configSaving || props.configSchemaLoading;
   return html`
     <div style="margin-top: 16px;">
@@ -152,6 +174,7 @@ export function renderChannelConfigSection(params: { channelId: string; props: C
               schema: props.configSchema,
               uiHints: props.configUiHints,
               disabled,
+              excludeProperties,
               onPatch: props.onConfigPatch,
             })
       }
