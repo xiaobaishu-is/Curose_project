@@ -11,6 +11,7 @@ export type ChannelsProps = {
   loading: boolean;
   snapshot: ChannelsStatusSnapshot | null;
   lastError: string | null;
+  configSaveError: string | null;
   lastSuccessAt: number | null;
   configSchema: unknown;
   configSchemaLoading: boolean;

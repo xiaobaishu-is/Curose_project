@@ -111,7 +111,7 @@ function checkPathStatAndPermissions(params: {
       };
     }
     const modeBits = stat.mode & 0o777;
-    if ((modeBits & 0o002) !== 0) {
+    if (params.origin !== "bundled" && (modeBits & 0o002) !== 0) {
       return {
         reason: "path_world_writable",
         sourcePath: params.source,

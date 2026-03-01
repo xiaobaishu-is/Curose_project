@@ -1,4 +1,4 @@
-import type { GatewayBrowserClient } from "../gateway.ts";
+import { GatewayRequestError, type GatewayBrowserClient } from "../gateway.ts";
 import type { ConfigSchemaResponse, ConfigSnapshot, ConfigUiHints } from "../types.ts";
 import type { JsonSchema } from "../views/config-form.shared.ts";
 import { coerceFormValues } from "./config/form-coerce.ts";
@@ -144,7 +144,20 @@ export async function saveConfig(state: ConfigState) {
     state.configFormDirty = false;
     await loadConfig(state);
   } catch (err) {
-    state.lastError = String(err);
+    if (err instanceof GatewayRequestError && err.details) {
+      const issues = (err.details as { issues?: Array<{ path?: string; message?: string }> })
+        .issues;
+      if (Array.isArray(issues) && issues.length > 0) {
+        state.lastError = issues
+          .slice(0, 5)
+          .map((iss) => `${iss.path ?? ""}: ${iss.message ?? ""}`.trim())
+          .join("\n");
+      } else {
+        state.lastError = err.message;
+      }
+    } else {
+      state.lastError = String(err);
+    }
   } finally {
     state.configSaving = false;
   }

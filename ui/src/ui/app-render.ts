@@ -366,6 +366,7 @@ export function renderApp(state: AppViewState) {
                 loading: state.channelsLoading,
                 snapshot: state.channelsSnapshot,
                 lastError: state.channelsError,
+                configSaveError: state.lastError,
                 lastSuccessAt: state.channelsLastSuccess,
                 configSchema: state.configSchema,
                 configSchemaLoading: state.configSchemaLoading,

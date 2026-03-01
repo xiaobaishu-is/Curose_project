@@ -514,6 +514,12 @@ export function renderFeishuCard(params: {
         `
         : nothing}
 
+      ${props.configSaveError
+        ? html`<div class="callout danger" style="margin-top: 12px; white-space: pre-wrap;">
+            配置保存失败：${props.configSaveError}
+          </div>`
+        : nothing}
+
       ${feishu?.lastError
         ? html`<div class="callout danger" style="margin-top: 12px;">
             ${feishu.lastError}

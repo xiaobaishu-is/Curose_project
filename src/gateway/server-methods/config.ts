@@ -140,10 +140,14 @@ function parseValidateConfigFromRawOrRespond(
   }
   const validated = validateConfigObjectWithPlugins(restored.result);
   if (!validated.ok) {
+    const issuesSummary = validated.issues
+      .slice(0, 5)
+      .map((iss) => `${iss.path}: ${iss.message}`)
+      .join("; ");
     respond(
       false,
       undefined,
-      errorShape(ErrorCodes.INVALID_REQUEST, "invalid config", {
+      errorShape(ErrorCodes.INVALID_REQUEST, `invalid config: ${issuesSummary}`, {
         details: { issues: validated.issues },
       }),
     );
